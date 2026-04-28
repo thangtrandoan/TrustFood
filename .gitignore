@@ -48,8 +48,8 @@ pnpm-debug.log*
 
 # local env files
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Metro / React Native cache
 .expo/
@@ -103,3 +103,11 @@ dist/
 
 # Keystore
 *.keystore
+!debug.keystore
+
+# Secrets and API Keys
+google-services.json
+GoogleService-Info.plist
+*.pem
+*.p12
+*.key
