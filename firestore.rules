@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+
+      match /followers/{followerId} {
+        allow read: if signedIn();
+        allow create, delete: if signedIn() && followerId == request.auth.uid;
+        allow update: if false;
+      }
+
+      match /followings/{followingId} {
+        allow read: if signedIn();
+        allow create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+    }
+
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.user_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /posts/{postId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.author_id == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.author_id == request.auth.uid;
+
+      match /likes/{userId} {
+        allow read: if signedIn();
+        allow create, delete: if signedIn() && userId == request.auth.uid;
+        allow update: if false;
+      }
+
+      match /dislikes/{userId} {
+        allow read: if signedIn();
+        allow create, delete: if signedIn() && userId == request.auth.uid;
+        allow update: if false;
+      }
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update: if signedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.actor_id == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}

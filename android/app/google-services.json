@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "901683240985",
+    "project_id": "trustfood-ef219",
+    "storage_bucket": "trustfood-ef219.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:901683240985:android:09340ffabe434a478fca88",
+        "android_client_info": {
+          "package_name": "com.trustmebro.trustfood"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "901683240985-j8at6te2d75t3jv68sjkmla0osudb9c0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDa_J_fI38Ex8HwVlBuUD_LHA8yuZ1pR4s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "901683240985-j8at6te2d75t3jv68sjkmla0osudb9c0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "901683240985-anr7oc16em7csse8ra1u10fh5kh7sibq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.trustmebro.trustfood"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
