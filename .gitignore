@@ -1,47 +1,10 @@
-# --- SECURITY FILES ---
-# Environment files
-.env
-.env.*
-!.env.example
-
-# Keystore files
-*.keystore
-!debug.keystore
-
-# Secrets and API Keys
-google-services.json
-GoogleService-Info.plist
-*.pem
-*.p12
-*.key
-
-# Local configuration
-local.properties
-**/.xcode.env.local
-
-# --- SYSTEM & BUILD FILES ---
-# node.js
-node_modules/
-npm-debug.log
-yarn-error.log
-yarn-debug.log*
-pnpm-debug.log*
-
-# Android/IntelliJ
-android/app/build/
-android/build/
-android/app/.cxx/
-.idea/
-.gradle/
-*.iml
-*.hprof
-.cxx/
-.kotlin/
-
-# OSX & Xcode
+# OSX
+#
 .DS_Store
+
+# Xcode
+#
 build/
-ios/build/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -57,34 +20,78 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
+**/.xcode.env.local
 
-# Metro / React Native cache & Bundler outputs
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+.kotlin/
+
+# node.js
+#
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log*
+pnpm-debug.log*
+
+# logs
+*.log
+
+# local env files
+.env
+.env.*
+!.env.example
+
+# Metro / React Native cache
 .expo/
 .expo-shared/
 .bundle/
 .tmp/
 tmp/
 *.tmp
-*.jsbundle
-.metro-health-check*
-dist/
 
 # fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/
+
 **/fastlane/report.xml
 **/fastlane/Preview.html
 **/fastlane/screenshots
 **/fastlane/test_output
 
+# Bundle artifact
+*.jsbundle
+
 # Ruby / CocoaPods
 **/Pods/
 /vendor/bundle/
 
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
+
 # testing
 /coverage
 
-# VS Code and logs
+# React Native / Bundler outputs
+android/app/build/
+android/build/
+ios/build/
+dist/
+
+# VS Code and local editor settings
 .vscode/
-*.log
 
 # Yarn
 .yarn/*
@@ -93,3 +100,14 @@ dist/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Keystore
+*.keystore
+!debug.keystore
+
+# Secrets and API Keys
+google-services.json
+GoogleService-Info.plist
+*.pem
+*.p12
+*.key
