@@ -11,8 +11,6 @@ import {
 import { requireAuthUid } from './authGuard';
 import type { AppUserProfile, PostDocument } from './types';
 
-const POST_STORAGE_BUCKET = 'gs://trustfood-ef219.appspot.com';
-
 export type CreatePostInput = {
   restaurantName: string;
   starRating: number;
@@ -173,7 +171,7 @@ function createPostImagePath(uid: string, postId: string, index: number, localUr
 
 function getPostStorageRef(fullPath: string): FirebaseStorageTypes.Reference {
   const normalizedPath = String(fullPath ?? '').replace(/^\/+/, '');
-  return storage().refFromURL(`${POST_STORAGE_BUCKET}/${normalizedPath}`);
+  return storage().ref(normalizedPath);
 }
 
 export async function uploadSingleImage(params: {
@@ -601,6 +599,7 @@ export async function createPost(input: CreatePostInput, options?: CreatePostOpt
       },
       like_count: 0,
       dislike_count: 0,
+      comment_count: 0,
       created_at: now,
       updated_at: now,
     };

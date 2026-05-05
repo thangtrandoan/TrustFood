@@ -3,7 +3,6 @@ import firestore from '@react-native-firebase/firestore';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   DEFAULT_AVATAR_URL,
-  USERNAMES_COLLECTION,
   USERS_COLLECTION,
 } from './constants';
 import { requireAuthUid, requireVerifiedEmail } from './authGuard';
@@ -11,7 +10,7 @@ import {
   pushNewDeviceLoginNotification,
   pushWelcomeNotification,
 } from './notificationFirebaseService';
-import type { AppUserProfile, UserNameDocument } from './types';
+import type { AppUserProfile } from './types';
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{4,20}$/;
 
@@ -74,6 +73,9 @@ async function reserveUsernameAndCreateProfile(params: {
   fullName: string;
   avatarUrl?: string;
   bio?: string;
+  email?: string;
+  authProvider?: string;
+  emailVerified?: boolean;
 }): Promise<AppUserProfile> {
   const db = firestore();
   const userNameLc = normalizeUsername(params.userName);
@@ -84,16 +86,7 @@ async function reserveUsernameAndCreateProfile(params: {
 
   return db.runTransaction(async (tx) => {
     const userRef = db.collection(USERS_COLLECTION).doc(params.uid);
-    const usernameRef = db.collection(USERNAMES_COLLECTION).doc(userNameLc);
-
-    const [userSnapshot, usernameSnapshot] = await Promise.all([
-      tx.get(userRef),
-      tx.get(usernameRef),
-    ]);
-
-    if (usernameSnapshot.exists()) {
-      throw new Error('USERNAME_TAKEN');
-    }
+    const userSnapshot = await tx.get(userRef);
 
     if (userSnapshot.exists() && userSnapshot.data()?.user_name) {
       throw new Error('PROFILE_ALREADY_EXISTS');
@@ -107,6 +100,9 @@ async function reserveUsernameAndCreateProfile(params: {
       user_name_lc: userNameLc,
       full_name: params.fullName.trim(),
       full_name_lc: normalizeFullName(params.fullName),
+      email: params.email,
+      auth_provider: params.authProvider,
+      email_verified: params.emailVerified,
       avatar_url: params.avatarUrl ?? DEFAULT_AVATAR_URL,
       bio: params.bio ?? '',
       follower_count: 0,
@@ -116,28 +112,10 @@ async function reserveUsernameAndCreateProfile(params: {
       updated_at: now,
     };
 
-    const usernameDoc: UserNameDocument = {
-      user_id: params.uid,
-      user_name: params.userName,
-      user_name_lc: userNameLc,
-      created_at: now,
-    };
-
     tx.set(userRef, profile, { merge: true });
-    tx.set(usernameRef, usernameDoc);
 
     return profile;
   });
-}
-
-export async function isUserNameAvailable(userName: string): Promise<boolean> {
-  const normalized = normalizeUsername(userName);
-  if (!USERNAME_REGEX.test(normalized)) {
-    return false;
-  }
-
-  const snapshot = await firestore().collection(USERNAMES_COLLECTION).doc(normalized).get();
-  return !snapshot.exists();
 }
 
 async function tryPushWelcome(userId: string): Promise<void> {
@@ -160,31 +138,20 @@ async function createProfileForGoogleUserIfMissing(user: FirebaseAuthTypes.User)
   const emailBase = (user.email ?? `user_${user.uid.slice(0, 6)}`)
     .split('@')[0]
     .replace(/[^a-zA-Z0-9_]/g, '_')
-    .slice(0, 16);
+    .slice(0, 20);
+  const candidate = emailBase || `user_${user.uid.slice(0, 6)}`;
 
-  for (let attempt = 0; attempt < 10; attempt += 1) {
-    const suffix = attempt === 0 ? '' : String(Math.floor(Math.random() * 9000) + 1000);
-    const candidate = `${emailBase}${suffix}`.slice(0, 20);
-
-    try {
-      await reserveUsernameAndCreateProfile({
-        uid: user.uid,
-        userName: candidate,
-        fullName: user.displayName?.trim() || candidate,
-        avatarUrl: user.photoURL ?? DEFAULT_AVATAR_URL,
-      });
-      await tryPushWelcome(user.uid);
-      await tryPushDeviceLogin(user.uid);
-      return;
-    } catch (error) {
-      if (error instanceof Error && (error.message === 'USERNAME_TAKEN' || error.message === 'USERNAME_INVALID')) {
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  throw new Error('FAILED_TO_CREATE_PROFILE');
+  await reserveUsernameAndCreateProfile({
+    uid: user.uid,
+    userName: candidate,
+    fullName: user.displayName?.trim() || candidate,
+    avatarUrl: user.photoURL ?? DEFAULT_AVATAR_URL,
+    email: user.email ?? undefined,
+    authProvider: 'google',
+    emailVerified: user.emailVerified,
+  });
+  await tryPushWelcome(user.uid);
+  await tryPushDeviceLogin(user.uid);
 }
 
 export function configureGoogleSignIn(webClientId: string): void {
@@ -195,12 +162,28 @@ export function configureGoogleSignIn(webClientId: string): void {
 }
 
 export async function signUpWithEmail(email: string, password: string): Promise<FirebaseAuthTypes.UserCredential> {
+  const normalizedEmail = email.trim();
+
   try {
-    const credential = await auth().createUserWithEmailAndPassword(email.trim(), password);
-    if (credential.user) {
-      await credential.user.sendEmailVerification();
+    const methods = await auth().fetchSignInMethodsForEmail(normalizedEmail);
+    if (methods.length > 0) {
+      if (methods.includes('google.com')) {
+        throw new Error('Email đã được đăng ký bằng Google. Vui lòng đăng nhập bằng Google.');
+      }
+      throw new Error('Email đã được sử dụng');
     }
-    return credential;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Email')) {
+      throw error;
+    }
+
+    if (error && typeof error === 'object' && 'code' in error) {
+      throw new Error(mapAuthError(error));
+    }
+  }
+
+  try {
+    return await auth().createUserWithEmailAndPassword(normalizedEmail, password);
   } catch (error) {
     throw new Error(mapAuthError(error));
   }
@@ -226,6 +209,9 @@ export async function completeOnboardingAfterEmailVerification(input: {
     fullName: input.fullName,
     avatarUrl: input.avatarUrl,
     bio: input.bio,
+    email: user.email ?? undefined,
+    authProvider: 'password',
+    emailVerified: user.emailVerified,
   });
 
   await tryPushWelcome(user.uid);
@@ -237,6 +223,9 @@ export async function completeRegistrationProfile(input: {
   fullName: string;
   avatarUrl?: string;
   bio?: string;
+  email?: string;
+  authProvider?: string;
+  emailVerified?: boolean;
 }): Promise<AppUserProfile> {
   const uid = requireAuthUid();
   const profile = await reserveUsernameAndCreateProfile({
@@ -245,6 +234,9 @@ export async function completeRegistrationProfile(input: {
     fullName: input.fullName,
     avatarUrl: input.avatarUrl,
     bio: input.bio,
+    email: input.email,
+    authProvider: input.authProvider,
+    emailVerified: input.emailVerified,
   });
 
   await tryPushWelcome(uid);
@@ -324,11 +316,42 @@ export async function changePasswordWithReauth(currentPassword: string, newPassw
 }
 
 export async function getCurrentUserProfile(): Promise<AppUserProfile | null> {
-  const uid = requireAuthUid();
-  const snapshot = await firestore().collection(USERS_COLLECTION).doc(uid).get();
-  if (!snapshot.exists()) {
-    return null;
+  const user = auth().currentUser;
+  if (!user) {
+    throw new Error('AUTH_REQUIRED');
   }
 
-  return snapshot.data() as AppUserProfile;
+  try {
+    const snapshot = await firestore().collection(USERS_COLLECTION).doc(user.uid).get();
+    if (snapshot.exists()) {
+      return snapshot.data() as AppUserProfile;
+    }
+  } catch {
+    // Fall through to an Auth-based profile when Firestore is not used.
+  }
+
+  const emailBase = (user.email ?? `user_${user.uid.slice(0, 6)}`)
+    .split('@')[0]
+    .replace(/[^a-zA-Z0-9_]/g, '_');
+  const fullName = user.displayName?.trim() || emailBase || 'Nguoi dung';
+  const userName = toSafeUsernameSeed(fullName || emailBase || user.uid);
+  const now = firestore.Timestamp.now();
+
+  return {
+    user_id: user.uid,
+    user_name: userName,
+    user_name_lc: userName.toLowerCase(),
+    full_name: fullName,
+    full_name_lc: normalizeFullName(fullName),
+    email: user.email ?? undefined,
+    auth_provider: user.providerData?.[0]?.providerId ?? 'password',
+    email_verified: user.emailVerified,
+    avatar_url: user.photoURL ?? DEFAULT_AVATAR_URL,
+    bio: '',
+    follower_count: 0,
+    following_count: 0,
+    review_count: 0,
+    created_at: now,
+    updated_at: now,
+  };
 }

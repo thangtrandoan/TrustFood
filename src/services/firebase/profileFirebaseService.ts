@@ -163,12 +163,15 @@ export async function updateProfile(input: UpdateProfileInput): Promise<AppUserP
 
   const nextProfile: Partial<AppUserProfile> = {
     avatar_url: avatarUrl,
-    avatar_path: avatarPath,
     full_name: input.fullName?.trim() ?? current.full_name,
     full_name_lc: (input.fullName?.trim() ?? current.full_name).toLowerCase().replace(/\s+/g, ' '),
     bio: input.bio ?? current.bio,
     updated_at: firestore.FieldValue.serverTimestamp(),
   };
+
+  if (typeof avatarPath === 'string' && avatarPath.trim().length > 0) {
+    nextProfile.avatar_path = avatarPath;
+  }
 
   await userRef.update(nextProfile);
 

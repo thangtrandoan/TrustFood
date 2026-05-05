@@ -33,7 +33,7 @@ type Props = {
   onOpenDetail: (id: string) => void;
 };
 
-export default function PostItem({ post, onLike, onDislike, onComment, onPressAuthor, onOpenDetail }: Props) {
+const PostItem = React.memo(({ post, onLike, onDislike, onComment, onPressAuthor, onOpenDetail }: Props) => {
   const starCount = Math.max(0, Math.min(5, Math.round(post.rating)));
 
   return (
@@ -86,7 +86,7 @@ export default function PostItem({ post, onLike, onDislike, onComment, onPressAu
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   post: {
@@ -134,3 +134,5 @@ const styles = StyleSheet.create({
   metaLiked: { color: '#FF3B30' },
   metaDisliked: { color: '#69A7FF' },
 });
+
+export default PostItem;

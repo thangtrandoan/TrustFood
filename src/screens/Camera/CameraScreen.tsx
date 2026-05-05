@@ -15,6 +15,8 @@ import { openPhoneGallery } from "../../utils/galleryHelper";
 
 export default function CameraScreen() {
   const [cameraPosition, setCameraPosition] = useState<"back" | "front">("back");
+  const [flash, setFlash] = useState<"off" | "on" | "auto">("off");
+  const [zoom, setZoom] = useState<number>(1);
   const backDevice = useCameraDevice("back");
   const frontDevice = useCameraDevice("front");
   const device = cameraPosition === "back" ? backDevice : frontDevice;
@@ -61,7 +63,9 @@ export default function CameraScreen() {
   }
 
   const takePicture = async () => {
-    const photo = await camera.current?.takePhoto();
+    const photo = await camera.current?.takePhoto({
+      flash: device?.hasFlash ? flash : 'off',
+    });
     if (photo) {
       const rawPath = String(photo.path ?? '');
       const normalizedUri = rawPath.startsWith('file://') ? rawPath : `file://${rawPath}`;
@@ -149,13 +153,35 @@ export default function CameraScreen() {
             device={device}
             isActive
             photo
+            zoom={zoom}
           />
-          <View style={styles.flashBadge}>
-            <Text style={styles.badgeText}>⚡</Text>
-          </View>
-          <View style={styles.zoomBadge}>
-            <Text style={styles.badgeText}>1x</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.flashBadge}
+            onPress={() => {
+              if (!device?.hasFlash) {
+                Alert.alert("Thông báo", "Thiết bị không hỗ trợ flash.");
+                return;
+              }
+              setFlash(prev => prev === "off" ? "on" : prev === "on" ? "auto" : "off");
+            }}
+          >
+            <Text style={styles.badgeText}>
+              {flash === "off" ? "⚡ Tắt" : flash === "on" ? "⚡ Bật" : "⚡ Auto"}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.zoomBadge}
+            onPress={() => {
+              let nextZoom = zoom + 1;
+              const maxZ = Math.min(3, device?.maxZoom ?? 3);
+              if (nextZoom > maxZ) {
+                nextZoom = 1;
+              }
+              setZoom(nextZoom);
+            }}
+          >
+            <Text style={styles.badgeText}>{zoom}x</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -303,14 +329,22 @@ const styles = StyleSheet.create({
 
   flashBadge: {
     position: "absolute",
-    top: 10,
-    left: 10,
+    top: 15,
+    left: 15,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
 
   zoomBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
+    top: 15,
+    right: 15,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
 
   bottomBar: {
@@ -351,6 +385,8 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 
   exploreText: {

@@ -110,6 +110,9 @@ export default function MessagesScreen() {
         data={filteredConversations}
         keyExtractor={(item) => item.conversationId}
         contentContainerStyle={styles.listContent}
+        initialNumToRender={10}
+        windowSize={11}
+        maxToRenderPerBatch={10}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={!loading ? <Text style={styles.emptyText}>Không tìm thấy đoạn chat phù hợp.</Text> : null}
         renderItem={({ item }) => (

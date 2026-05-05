@@ -67,7 +67,27 @@ export default function ChatConversationScreen() {
 
     (async () => {
       try {
-        const ensured = await ensureConversationWithUser(params.userId);
+        const currentProfile = user?.user_id
+          ? {
+              user_id: user.user_id,
+              user_name: user.user_name,
+              full_name: user.full_name,
+              avatar_url: user.avatar_url,
+            }
+          : undefined;
+        const targetProfile = params.userId
+          ? {
+              user_id: params.userId,
+              user_name: params.name,
+              full_name: params.name,
+              avatar_url: params.avatar ?? 'https://i.pravatar.cc/150?img=47',
+            }
+          : undefined;
+
+        const ensured = await ensureConversationWithUser(params.userId, {
+          currentProfile,
+          targetProfile,
+        });
         if (!mounted) {
           return;
         }
@@ -89,6 +109,7 @@ export default function ChatConversationScreen() {
             if (!mounted) {
               return;
             }
+            console.error('[chat] subscribeConversationMessages failed', e);
             setError(e instanceof Error ? e.message : 'Không thể tải hội thoại');
             setLoading(false);
           },
@@ -97,6 +118,7 @@ export default function ChatConversationScreen() {
         if (!mounted) {
           return;
         }
+        console.error('[chat] ensureConversationWithUser failed', e);
         setError(e instanceof Error ? e.message : 'Không thể mở hội thoại');
         setLoading(false);
       }
@@ -125,6 +147,7 @@ export default function ChatConversationScreen() {
       });
       setDraft('');
     } catch (e) {
+      console.error('[chat] sendChatMessage failed', e);
       Alert.alert('Lỗi', e instanceof Error ? e.message : 'Không thể gửi tin nhắn');
     } finally {
       setSending(false);

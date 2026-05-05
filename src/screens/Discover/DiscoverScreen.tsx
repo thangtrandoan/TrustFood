@@ -4,6 +4,7 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import {Navbar} from '../../components/Navbar';
 import BottomBar from '../../components/BottomBar';
 import PostItem, { Post } from '../../components/PostItem';
+import CommentModal from '../../components/CommentModal';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
@@ -54,7 +55,7 @@ function mapFeedPostToUi(post: any): Post {
     openTimeLabel: `${post.opening_time ?? '--:--'} - ${post.closing_time ?? '--:--'}`,
     likes: Number(post.like_count) || 0,
     dislikes: Number(post.dislike_count) || 0,
-    comments: 0,
+    comments: Number(post.comment_count) || 0,
     liked: Boolean(post.reaction?.liked),
     disliked: Boolean(post.reaction?.disliked),
   };
@@ -69,6 +70,7 @@ export default function DiscoverScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [commentingPostId, setCommentingPostId] = useState<string | null>(null);
   const cursorRef = useRef<any>(null);
   const hasMoreRef = useRef(true);
 
@@ -182,7 +184,9 @@ export default function DiscoverScreen() {
     }
   }, [posts, reactingPostIds]);
 
-  const handleComment = useCallback((_id: string) => {}, []);
+  const handleComment = useCallback((id: string) => {
+    setCommentingPostId(id);
+  }, []);
 
   const handleOpenProfile = useCallback((authorId?: string) => {
     navigation.navigate('Profile', authorId ? { userId: authorId } : undefined);
@@ -252,6 +256,10 @@ export default function DiscoverScreen() {
       <FlatList
         data={posts}
         keyExtractor={(i) => i.id}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={11}
+        removeClippedSubviews={true}
         renderItem={({ item }) => (
           <PostItem
             post={item}
@@ -329,6 +337,17 @@ export default function DiscoverScreen() {
           </View>
         </View>
       </Modal>
+
+      <CommentModal 
+        postId={commentingPostId} 
+        visible={commentingPostId !== null} 
+        onClose={() => setCommentingPostId(null)}
+        onCommentCountChange={(id, delta) => {
+          setPosts(prev => prev.map(p => 
+            p.id === id ? { ...p, comments: Math.max(0, p.comments + delta) } : p
+          ));
+        }}
+      />
 
       <BottomBar activeItem="feed" />
     </View>

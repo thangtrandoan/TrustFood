@@ -10,3 +10,4 @@ export * from './feedFirebaseService';
 export * from './mapFirebaseService';
 export * from './notificationFirebaseService';
 export * from './chatFirebaseService';
+export * from './commentFirebaseService';

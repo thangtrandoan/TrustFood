@@ -8,7 +8,6 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import {
   completeRegistrationProfile,
   createUsernameCandidate,
-  isUserNameAvailable,
   sendEmailVerificationAgain,
   signUpWithEmail,
 } from '../../services/firebase';
@@ -46,15 +45,13 @@ export default function SetNameScreen() {
     setLoading(true);
 
     try {
-      const available = await isUserNameAvailable(finalUserName);
-      if (!available) {
-        throw new Error('Username da ton tai, vui long chon username khac');
-      }
-
-      await signUpWithEmail(email, password);
+      const credential = await signUpWithEmail(email, password);
       await completeRegistrationProfile({
         userName: finalUserName,
         fullName: name.trim(),
+        email: credential.user?.email ?? email.trim(),
+        authProvider: 'password',
+        emailVerified: credential.user?.emailVerified ?? false,
       });
       await sendEmailVerificationAgain();
 

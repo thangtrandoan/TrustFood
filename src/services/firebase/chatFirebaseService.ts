@@ -1,5 +1,5 @@
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
-import { CONVERSATIONS_COLLECTION, MESSAGES_SUBCOLLECTION, USERS_COLLECTION } from './constants';
+import { CONVERSATIONS_COLLECTION, DEFAULT_AVATAR_URL, MESSAGES_SUBCOLLECTION, USERS_COLLECTION } from './constants';
 import { requireAuthUid } from './authGuard';
 import type {
   AppUserProfile,
@@ -38,15 +38,13 @@ function mapProfileToChatParticipant(profile: AppUserProfile): ChatParticipantPr
   };
 }
 
-async function getRequiredUserProfile(uid: string): Promise<AppUserProfile> {
-  const snapshot = await firestore().collection(USERS_COLLECTION).doc(uid).get();
-  if (!snapshot.exists()) {
-    throw new Error('USER_PROFILE_NOT_FOUND');
-  }
-  return snapshot.data() as AppUserProfile;
-}
-
-export async function ensureConversationWithUser(targetUserId: string): Promise<{
+export async function ensureConversationWithUser(
+  targetUserId: string,
+  overrides?: {
+    currentProfile?: ChatParticipantProfile;
+    targetProfile?: ChatParticipantProfile;
+  },
+): Promise<{
   conversationId: string;
   partner: ChatParticipantProfile;
 }> {
@@ -61,10 +59,22 @@ export async function ensureConversationWithUser(targetUserId: string): Promise<
     throw new Error('SELF_CHAT_NOT_ALLOWED');
   }
 
-  const [me, target] = await Promise.all([
-    getRequiredUserProfile(uid),
-    getRequiredUserProfile(normalizedTargetId),
-  ]);
+  const currentProfileOverride = overrides?.currentProfile;
+  const targetProfileOverride = overrides?.targetProfile;
+
+  const me: ChatParticipantProfile = currentProfileOverride ?? {
+    user_id: uid,
+    user_name: `user_${uid.slice(0, 6)}`,
+    full_name: 'Nguoi dung',
+    avatar_url: DEFAULT_AVATAR_URL,
+  };
+
+  const target: ChatParticipantProfile = targetProfileOverride ?? {
+    user_id: normalizedTargetId,
+    user_name: `user_${normalizedTargetId.slice(0, 6)}`,
+    full_name: 'Nguoi dung',
+    avatar_url: DEFAULT_AVATAR_URL,
+  };
 
   const conversationId = buildConversationId(uid, normalizedTargetId);
   const conversationRef = firestore()
@@ -73,45 +83,19 @@ export async function ensureConversationWithUser(targetUserId: string): Promise<
 
   const now = firestore.FieldValue.serverTimestamp();
 
-  await firestore().runTransaction(async (tx) => {
-    const snapshot = await tx.get(conversationRef);
-    if (snapshot.exists()) {
-      const current = snapshot.data() as ChatConversationDocument;
-      const currentProfiles = current.participant_profiles ?? {};
-      const nextProfiles = {
-        ...currentProfiles,
-        [uid]: mapProfileToChatParticipant(me),
-        [normalizedTargetId]: mapProfileToChatParticipant(target),
-      };
+  const profilesPatch = {
+    [`participant_profiles.${uid}`]: mapProfileToChatParticipant(me),
+    [`participant_profiles.${normalizedTargetId}`]: mapProfileToChatParticipant(target),
+  };
 
-      tx.set(
-        conversationRef,
-        {
-          participant_ids: [uid, normalizedTargetId],
-          participant_profiles: nextProfiles,
-          updated_at: now,
-        } as Partial<ChatConversationDocument>,
-        { merge: true },
-      );
-      return;
-    }
-
-    const newDoc: ChatConversationDocument = {
-      id: conversationId,
+  await conversationRef.set(
+    {
       participant_ids: [uid, normalizedTargetId],
-      participant_profiles: {
-        [uid]: mapProfileToChatParticipant(me),
-        [normalizedTargetId]: mapProfileToChatParticipant(target),
-      },
-      last_message_text: '',
-      last_message_sender_id: '',
-      last_message_at: now,
-      created_at: now,
       updated_at: now,
-    };
-
-    tx.set(conversationRef, newDoc);
-  });
+      ...profilesPatch,
+    } as Partial<ChatConversationDocument>,
+    { merge: true },
+  );
 
   return {
     conversationId,
@@ -269,6 +253,7 @@ export async function sendChatMessage(input: {
     conversation_id: conversationId,
     sender_id: uid,
     receiver_id: receiverId,
+    participant_ids: [uid, receiverId],
     text,
     created_at: now,
     updated_at: now,

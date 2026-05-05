@@ -9,6 +9,9 @@ export type AppUserProfile = {
   user_name_lc: string;
   full_name: string;
   full_name_lc: string;
+  email?: string;
+  auth_provider?: string;
+  email_verified?: boolean;
   avatar_url: string;
   avatar_path?: string;
   bio: string;
@@ -51,6 +54,7 @@ export type PostDocument = {
   location: PostLocation;
   like_count: number;
   dislike_count: number;
+  comment_count: number;
   created_at: FirestoreTimestamp;
   updated_at?: FirestoreTimestamp;
 };
@@ -60,11 +64,23 @@ export type PostReactionStatus = {
   disliked: boolean;
 };
 
+export type CommentDocument = {
+  id: string;
+  post_id: string;
+  author_id: string;
+  author_username: string;
+  author_avatar: string;
+  text: string;
+  created_at: FirestoreTimestamp;
+  updated_at?: FirestoreTimestamp;
+};
+
 export type NotificationType =
   | 'welcome'
   | 'new_device_login'
   | 'follow'
   | 'like_post'
+  | 'comment_post'
   | 'system';
 
 export type NotificationDocument = {
@@ -102,6 +118,7 @@ export type ChatMessageDocument = {
   conversation_id: string;
   sender_id: string;
   receiver_id: string;
+  participant_ids: string[];
   text: string;
   created_at: FirestoreTimestamp;
   updated_at?: FirestoreTimestamp;

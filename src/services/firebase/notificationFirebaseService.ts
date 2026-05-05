@@ -258,3 +258,19 @@ export async function pushLikePostNotification(params: {
     dedupeWindowMs: 15_000,
   });
 }
+
+export async function pushCommentPostNotification(params: {
+  userId: string;
+  actorId: string;
+  actorName: string;
+  postId: string;
+  commentPreview: string;
+}): Promise<string> {
+  return createNotification({
+    userId: params.userId,
+    type: 'comment_post',
+    actorId: params.actorId,
+    postId: params.postId,
+    content: `${params.actorName} đã bình luận: "${params.commentPreview}"`,
+  });
+}

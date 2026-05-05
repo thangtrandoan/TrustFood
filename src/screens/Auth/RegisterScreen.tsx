@@ -14,6 +14,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useAuth } from '../../context/AuthContext';
+import auth from '@react-native-firebase/auth';
+import {
+  completeRegistrationProfile,
+  createUsernameCandidate,
+  sendEmailVerificationAgain,
+  signUpWithEmail,
+} from '../../services/firebase';
 
 export default function RegisterScreen() {
   const theme = useTheme();
@@ -22,6 +29,10 @@ export default function RegisterScreen() {
   const { loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [userName, setUserName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -37,13 +48,63 @@ export default function RegisterScreen() {
       return;
     }
 
+    if (password.length < 8) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp');
+      return;
+    }
+
+    if (!name.trim()) {
+      setError('Vui lòng nhập tên');
+      return;
+    }
+
+    const nameSeed = name.trim();
+    const finalUserName = userName.trim() || createUsernameCandidate(nameSeed, email.trim());
+    if (!/^[a-zA-Z0-9_]{4,20}$/.test(finalUserName)) {
+      setError('Username chi duoc dung chu, so, _, do dai 4-20 ky tu');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
+    let createdUid: string | null = null;
+
     try {
-      navigation.navigate('CreatePassword', { email: email.trim(), otp: '' });
+      const credential = await signUpWithEmail(email.trim(), password);
+      const uid = credential.user?.uid;
+      if (!uid) {
+        throw new Error('Không thể tạo tài khoản');
+      }
+
+      createdUid = uid;
+      await completeRegistrationProfile({
+        userName: finalUserName,
+        fullName: name.trim(),
+        email: credential.user?.email ?? email.trim(),
+        authProvider: 'password',
+        emailVerified: credential.user?.emailVerified ?? false,
+      });
+      try {
+        await sendEmailVerificationAgain();
+      } catch {
+        // Don't block registration if verification email fails to send.
+      }
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Không thể tiếp tục đăng ký';
+      if (createdUid) {
+        await auth().currentUser?.delete().catch(() => undefined);
+      }
+      const message = e instanceof Error ? e.message : 'Không thể tạo tài khoản';
       setError(message);
     } finally {
       setLoading(false);
@@ -92,6 +153,47 @@ export default function RegisterScreen() {
           />
         </>
 
+        <AppText style={styles.label}>Mật khẩu</AppText>
+        <TextInput
+          placeholder="Nhập mật khẩu"
+          placeholderTextColor="#666"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={[styles.input, error && styles.inputError]}
+        />
+
+        <AppText style={styles.label}>Nhập lại mật khẩu</AppText>
+        <TextInput
+          placeholder="Nhập lại mật khẩu"
+          placeholderTextColor="#666"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          style={[styles.input, error && styles.inputError]}
+        />
+
+        <AppText style={styles.subText}>Mật khẩu tối thiểu 8 ký tự</AppText>
+
+        <AppText style={styles.label}>Tên hiển thị</AppText>
+        <TextInput
+          placeholder="Tên của bạn"
+          placeholderTextColor="#666"
+          value={name}
+          onChangeText={setName}
+          style={[styles.input, error && styles.inputError]}
+        />
+
+        <AppText style={styles.label}>Username</AppText>
+        <TextInput
+          placeholder="Username (4-20 ky tu, chu/so/_)"
+          placeholderTextColor="#666"
+          value={userName}
+          onChangeText={setUserName}
+          autoCapitalize="none"
+          style={[styles.input, error && styles.inputError]}
+        />
+
         {error ? <AppText style={styles.error}>{error}</AppText> : null}
 
         <TouchableOpacity
@@ -105,7 +207,7 @@ export default function RegisterScreen() {
           disabled={loading}
           onPress={handleContinue}
         >
-          <AppText variant="P1_Medium">{loading ? 'Đang xử lý...' : 'Tiếp tục'}</AppText>
+          <AppText variant="P1_Medium">{loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</AppText>
         </TouchableOpacity>
 
         <AppText variant="P4_Regular" style={styles.addText}>

@@ -148,6 +148,9 @@ export default function ProfileReviewsScreen() {
         data={reviewImages}
         keyExtractor={(item) => item.id}
         numColumns={3}
+        initialNumToRender={12}
+        windowSize={11}
+        maxToRenderPerBatch={12}
         columnWrapperStyle={styles.gridRow}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
