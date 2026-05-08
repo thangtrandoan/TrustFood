@@ -111,3 +111,6 @@ GoogleService-Info.plist
 *.pem
 *.p12
 *.key
+
+android/app/debug.keystore
+
