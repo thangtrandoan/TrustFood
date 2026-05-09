@@ -7,6 +7,8 @@ import {
   Platform,
   Image,
   TextInput,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
 import { AppText } from '../../components/AppText';
 import { useTheme } from '../../hooks/useTheme';
@@ -21,6 +23,12 @@ import {
   sendEmailVerificationAgain,
   signUpWithEmail,
 } from '../../services/firebase';
+
+const { width } = Dimensions.get('window');
+const baseWidth = 375;
+const scale = (size: number) => (width / baseWidth) * size;
+const moderateScale = (size: number, factor = 0.5) =>
+  size + (scale(size) - size) * factor;
 
 export default function RegisterScreen() {
   const theme = useTheme();
@@ -130,116 +138,124 @@ export default function RegisterScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.content}>
-        <Image
-          source={require('../../assets/icons/Logo.png')}
-          style={styles.logo}
-        />
-
-        <AppText variant="H3" style={styles.title}>
-          Đăng ký
-        </AppText>
-
-        <>
-          <AppText style={styles.label}>Email</AppText>
-          <TextInput
-            placeholder="Email của bạn"
-            placeholderTextColor="#666"
-            value={email}
-            onChangeText={setEmail}
-            style={[styles.input, error && styles.inputError]}
-            keyboardType="email-address"
-            autoCapitalize="none"
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.content}>
+          <Image
+            source={require('../../assets/icons/Logo.png')}
+            style={styles.logo}
           />
-        </>
 
-        <AppText style={styles.label}>Mật khẩu</AppText>
-        <TextInput
-          placeholder="Nhập mật khẩu"
-          placeholderTextColor="#666"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          style={[styles.input, error && styles.inputError]}
-        />
-
-        <AppText style={styles.label}>Nhập lại mật khẩu</AppText>
-        <TextInput
-          placeholder="Nhập lại mật khẩu"
-          placeholderTextColor="#666"
-          secureTextEntry
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          style={[styles.input, error && styles.inputError]}
-        />
-
-        <AppText style={styles.subText}>Mật khẩu tối thiểu 8 ký tự</AppText>
-
-        <AppText style={styles.label}>Tên hiển thị</AppText>
-        <TextInput
-          placeholder="Tên của bạn"
-          placeholderTextColor="#666"
-          value={name}
-          onChangeText={setName}
-          style={[styles.input, error && styles.inputError]}
-        />
-
-        <AppText style={styles.label}>Username</AppText>
-        <TextInput
-          placeholder="Username (4-20 ky tu, chu/so/_)"
-          placeholderTextColor="#666"
-          value={userName}
-          onChangeText={setUserName}
-          autoCapitalize="none"
-          style={[styles.input, error && styles.inputError]}
-        />
-
-        {error ? <AppText style={styles.error}>{error}</AppText> : null}
-
-        <TouchableOpacity
-          style={[
-            styles.primaryBtn,
-            {
-              backgroundColor: theme.colors.primary,
-              opacity: loading ? 0.6 : 1,
-            },
-          ]}
-          disabled={loading}
-          onPress={handleContinue}
-        >
-          <AppText variant="P1_Medium">{loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}</AppText>
-        </TouchableOpacity>
-
-        <AppText variant="P4_Regular" style={styles.addText}>
-          - - - - - - - - - - - - - - - - - - - -Đăng nhập nhanh với- - - - - - - - - - - - - - - - - - - - 
-        </AppText>
-
-        <TouchableOpacity
-          style={[styles.outlineBtn, { opacity: googleLoading ? 0.7 : 1 }]}
-          onPress={handleGoogle}
-          disabled={googleLoading}
-        >
-          <View style={styles.btnContent}>
-            <Image
-              source={require('../../assets/icons/Google__G__logo.svg.png')}
-              style={styles.icon}
-              resizeMode="contain"
-            />
-            <AppText variant="P1_Medium" style={styles.btnText}>
-              {googleLoading ? 'Đang đăng ký...' : 'Google'}
-            </AppText>
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.rowCenter}>
-          <AppText variant="P4_Regular" style={{ color: '#aaa' }}>
-            Bạn đã có tài khoản?{' '}
+          <AppText variant="H3" style={styles.title}>
+            Đăng ký
           </AppText>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <AppText style={styles.link}>Đăng nhập</AppText>
+
+          <>
+            <AppText style={styles.label}>Email</AppText>
+            <TextInput
+              placeholder="Email của bạn"
+              placeholderTextColor="#666"
+              value={email}
+              onChangeText={setEmail}
+              style={[styles.input, error && styles.inputError]}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </>
+
+          <AppText style={styles.label}>Mật khẩu</AppText>
+          <TextInput
+            placeholder="Nhập mật khẩu"
+            placeholderTextColor="#666"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            style={[styles.input, error && styles.inputError]}
+          />
+
+          <AppText style={styles.label}>Nhập lại mật khẩu</AppText>
+          <TextInput
+            placeholder="Nhập lại mật khẩu"
+            placeholderTextColor="#666"
+            secureTextEntry
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            style={[styles.input, error && styles.inputError]}
+          />
+
+          <AppText style={styles.subText}>Mật khẩu tối thiểu 8 ký tự</AppText>
+
+          <AppText style={styles.label}>Tên hiển thị</AppText>
+          <TextInput
+            placeholder="Tên của bạn"
+            placeholderTextColor="#666"
+            value={name}
+            onChangeText={setName}
+            style={[styles.input, error && styles.inputError]}
+          />
+
+          <AppText style={styles.label}>Username</AppText>
+          <TextInput
+            placeholder="Username (4-20 ky tu, chu/so/_)"
+            placeholderTextColor="#666"
+            value={userName}
+            onChangeText={setUserName}
+            autoCapitalize="none"
+            style={[styles.input, error && styles.inputError]}
+          />
+
+          {error ? <AppText style={styles.error}>{error}</AppText> : null}
+
+          <TouchableOpacity
+            style={[
+              styles.primaryBtn,
+              {
+                backgroundColor: theme.colors.primary,
+                opacity: loading ? 0.6 : 1,
+              },
+            ]}
+            disabled={loading}
+            onPress={handleContinue}
+          >
+            <AppText variant="P1_Medium">
+              {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+            </AppText>
           </TouchableOpacity>
+
+          <AppText variant="P4_Regular" style={styles.addText}>
+            ----- Đăng nhập nhanh với -----
+          </AppText>
+
+          <TouchableOpacity
+            style={[styles.outlineBtn, { opacity: googleLoading ? 0.7 : 1 }]}
+            onPress={handleGoogle}
+            disabled={googleLoading}
+          >
+            <View style={styles.btnContent}>
+              <Image
+                source={require('../../assets/icons/Google__G__logo.svg.png')}
+                style={styles.icon}
+                resizeMode="contain"
+              />
+              <AppText variant="P1_Medium" style={styles.btnText}>
+                {googleLoading ? 'Đang đăng ký...' : 'Google'}
+              </AppText>
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.rowCenter}>
+            <AppText variant="P4_Regular" style={{ color: '#aaa' }}>
+              Bạn đã có tài khoản?{' '}
+            </AppText>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <AppText style={styles.link}>Đăng nhập</AppText>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -248,36 +264,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
-    padding: 16,
+    paddingHorizontal: scale(16),
+    paddingVertical: scale(8),
     justifyContent: 'center',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: scale(8),
   },
   content: {
     alignItems: 'center',
+    width: '100%',
+    maxWidth: width * 0.9,
+    alignSelf: 'center',
   },
   logo: {
-    width: 72,
-    height: 72,
-    marginBottom: 24,
-    borderRadius: 12,
+    width: scale(72),
+    height: scale(72),
+    marginBottom: scale(16),
+    borderRadius: scale(12),
   },
   title: {
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: scale(20),
     color: '#fff',
   },
   label: {
     alignSelf: 'flex-start',
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: scale(4),
+    fontSize: moderateScale(14),
   },
   input: {
     width: '100%',
-    height: 50,
+    height: scale(48),
     backgroundColor: '#1c1c1c',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    borderRadius: scale(12),
+    paddingHorizontal: scale(16),
+    marginBottom: scale(8),
     color: '#fff',
+    fontSize: moderateScale(14),
   },
   inputError: {
     borderWidth: 1,
@@ -286,25 +313,28 @@ const styles = StyleSheet.create({
   error: {
     alignSelf: 'flex-start',
     color: 'red',
-    marginBottom: 12,
+    marginBottom: scale(8),
+    fontSize: moderateScale(12),
   },
   primaryBtn: {
-    height: 56,
-    borderRadius: 28,
+    height: scale(52),
+    borderRadius: scale(28),
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    marginTop: 12,
+    marginTop: scale(10),
   },
   addText: {
     textAlign: 'center',
-    marginTop: 24,
+    marginTop: scale(14),
     color: '#c0c0c0',
+    fontSize: moderateScale(12),
+    lineHeight: moderateScale(16),
   },
   outlineBtn: {
-    marginTop: 16,
-    height: 56,
-    borderRadius: 28,
+    marginTop: scale(10),
+    height: scale(52),
+    borderRadius: scale(28),
     borderWidth: 1,
     borderColor: '#fff',
     justifyContent: 'center',
@@ -316,25 +346,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   icon: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
+    width: scale(20),
+    height: scale(20),
+    marginRight: scale(8),
   },
   btnText: {
     color: '#fff',
   },
   rowCenter: {
     flexDirection: 'row',
-    marginTop: 20,
+    marginTop: scale(14),
     alignItems: 'center',
   },
   link: {
     color: '#FFD23F',
     fontWeight: '600',
+    fontSize: moderateScale(13),
   },
   subText: {
     alignSelf: 'flex-start',
     color: '#aaa',
-    marginBottom: 8,
+    marginBottom: scale(6),
+    fontSize: moderateScale(12),
   },
 });
