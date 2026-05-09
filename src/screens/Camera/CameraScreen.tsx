@@ -7,11 +7,23 @@ import {
   TouchableOpacity,
   Text,
   Linking,
+  Dimensions,
 } from "react-native";
 import { Camera, useCameraDevice } from "react-native-vision-camera";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { openPhoneGallery } from "../../utils/galleryHelper";
+
+const { width, height } = Dimensions.get("window");
+const baseWidth = 375;
+const scale = (size: number) => (width / baseWidth) * size;
+const moderateScale = (size: number, factor = 0.5) =>
+  size + (scale(size) - size) * factor;
+const frameSize = Math.min(width * 0.9, height * 0.55);
+const frameOffset = Math.max(scale(6), height * 0.012);
+const modeBarHeight = scale(44);
+const topInset = Math.max(scale(10), height * 0.04);
+const bottomInset = Math.max(scale(8), height * 0.03);
 
 export default function CameraScreen() {
   const [cameraPosition, setCameraPosition] = useState<"back" | "front">("back");
@@ -114,38 +126,41 @@ export default function CameraScreen() {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.avatar} onPress={openProfile} activeOpacity={0.8} />
-        <TouchableOpacity 
-          style={styles.dropdown}
-          onPress={() => setDropdownOpen(!dropdownOpen)}
-        >
-          <Text style={styles.dropdownText}>{selectedOption} ▾</Text>
-        </TouchableOpacity>
-        
-        {dropdownOpen && (
-          <View style={styles.dropdownMenu}>
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={() => {
-                setSelectedOption("Mọi người");
-                setDropdownOpen(false);
-              }}
-            >
-              <Text style={styles.dropdownItemText}>Mọi người</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.dropdownItem}
-              onPress={() => {
-                setSelectedOption("Chỉ mình tôi");
-                setDropdownOpen(false);
-              }}
-            >
-              <Text style={styles.dropdownItemText}>Chỉ mình tôi</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.topBarCenter}>
+          <TouchableOpacity
+            style={styles.dropdown}
+            onPress={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <Text style={styles.dropdownText}>{selectedOption} ▾</Text>
+          </TouchableOpacity>
+
+          {dropdownOpen && (
+            <View style={styles.dropdownMenu}>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSelectedOption("Mọi người");
+                  setDropdownOpen(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>Mọi người</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dropdownItem}
+                onPress={() => {
+                  setSelectedOption("Chỉ mình tôi");
+                  setDropdownOpen(false);
+                }}
+              >
+                <Text style={styles.dropdownItemText}>Chỉ mình tôi</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+        <View style={styles.topBarSpacer} />
       </View>
 
-      <View style={styles.frameContainer}>
+      <View style={styles.content}>
         <View style={styles.frame}>
           <Camera
             ref={camera}
@@ -155,7 +170,7 @@ export default function CameraScreen() {
             photo
             zoom={zoom}
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.flashBadge}
             onPress={() => {
               if (!device?.hasFlash) {
@@ -169,7 +184,7 @@ export default function CameraScreen() {
               {flash === "off" ? "⚡ Tắt" : flash === "on" ? "⚡ Bật" : "⚡ Auto"}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.zoomBadge}
             onPress={() => {
               let nextZoom = zoom + 1;
@@ -185,211 +200,239 @@ export default function CameraScreen() {
         </View>
       </View>
 
-      <View style={styles.bottomBar}>
-        <TouchableOpacity 
-          style={styles.smallBtn}
-          onPress={() => {
-            void handlePickFromGallery();
-          }}
-          disabled={pickingImage}
-        >
-          {pickingImage ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Ionicons name="images" size={24} color="#fff" />
-          )}
-        </TouchableOpacity>
+      <View style={styles.bottomSection}>
+        <View style={styles.modeSpacer} />
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.smallBtn}
+            onPress={() => {
+              void handlePickFromGallery();
+            }}
+            disabled={pickingImage}
+          >
+            {pickingImage ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="images" size={moderateScale(24)} color="#fff" />
+            )}
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.captureWrapper} onPress={takePicture}>
-          <View style={styles.captureBtn} />
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.captureWrapper} onPress={takePicture}>
+            <View style={styles.captureBtn} />
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.smallBtn} onPress={handleFlipCamera}>
-          <Ionicons name="camera-reverse" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.smallBtn} onPress={handleFlipCamera}>
+            <Ionicons name="camera-reverse" size={moderateScale(24)} color="#fff" />
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.explore}>
-        <TouchableOpacity onPress={() => navigation.navigate('Discover')}>
-          <Text style={styles.exploreText}>Khám phá</Text>
-        </TouchableOpacity>
+        <View style={styles.explore}>
+          <TouchableOpacity onPress={() => navigation.navigate('Discover')}>
+            <Text style={styles.exploreText}>Khám phá</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+    paddingHorizontal: scale(16),
+    paddingTop: topInset,
+    paddingBottom: bottomInset,
+  },
   centerFallback: {
     flex: 1,
     backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: scale(20),
   },
   fallbackTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: moderateScale(18),
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: scale(10),
     textAlign: 'center',
   },
   fallbackText: {
     color: '#bbb',
-    fontSize: 14,
+    fontSize: moderateScale(13),
     textAlign: 'center',
-    marginBottom: 18,
+    marginBottom: scale(16),
   },
   fallbackBtn: {
     backgroundColor: '#FFD400',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 18,
-    marginBottom: 10,
+    paddingHorizontal: scale(18),
+    paddingVertical: scale(10),
+    borderRadius: scale(18),
+    marginBottom: scale(10),
   },
   fallbackBtnText: {
     color: '#111',
     fontWeight: '700',
+    fontSize: moderateScale(13),
   },
   fallbackGhostBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: scale(10),
+    paddingVertical: scale(8),
   },
   fallbackGhostText: {
     color: '#FFD400',
-    fontSize: 13,
+    fontSize: moderateScale(12),
   },
 
   topBar: {
-    position: "absolute",
-    top: 50,
-    width: "100%",
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
     zIndex: 20,
+    marginBottom: scale(6),
   },
 
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: scale(40),
+    height: scale(40),
+    borderRadius: scale(20),
     backgroundColor: "#999",
-    position: "absolute",
-    left: 20,
+  },
+
+  topBarCenter: {
+    flex: 1,
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  topBarSpacer: {
+    width: scale(40),
+    height: scale(40),
   },
 
   dropdown: {
     backgroundColor: "#333",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20, 
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(20), 
   },
 
-  dropdownText: { color: "#fff" },
+  dropdownText: {
+    color: "#fff",
+    fontSize: moderateScale(13),
+  },
 
   dropdownMenu: {
     position: "absolute",
-    top: 35,
+    top: scale(38),
     backgroundColor: "#222",
-    borderRadius: 12,
+    borderRadius: scale(12),
     overflow: "hidden",
-    minWidth: 150,
+    minWidth: width * 0.4,
     zIndex: 30,
   },
 
   dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: scale(10),
+    paddingHorizontal: scale(14),
     borderBottomWidth: 1,
     borderBottomColor: "#333",
   },
 
   dropdownItemText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: moderateScale(13),
   },
 
-  frameContainer: {
-    position: "absolute",
-    top: 120,
-    width: "100%",
+  content: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
   },
 
   frame: {
-    width: 360,
-    height: 360,
-    borderRadius: 30,
+    width: frameSize,
+    height: frameSize,
+    borderRadius: scale(26),
     backgroundColor: "rgba(0,0,0,0.4)",
     overflow: "hidden",
     position: "relative",
+    transform: [{ translateY: -frameOffset }],
   },
 
   flashBadge: {
     position: "absolute",
-    top: 15,
-    left: 15,
+    top: scale(12),
+    left: scale(12),
     backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(16),
   },
 
   zoomBadge: {
     position: "absolute",
-    top: 15,
-    right: 15,
+    top: scale(12),
+    right: scale(12),
     backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: scale(12),
+    paddingVertical: scale(6),
+    borderRadius: scale(16),
+  },
+
+  bottomSection: {
+    alignItems: 'center',
+    paddingTop: scale(6),
+  },
+
+  modeSpacer: {
+    height: modeBarHeight,
+    width: "100%",
   },
 
   bottomBar: {
-    position: "absolute",
-    bottom: 80,
-    width: "100%",
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
+    width: "100%",
+    marginTop: scale(8),
+    marginBottom: scale(6),
   },
 
   smallBtn: {
-    width: 40,
-    height: 40,
+    width: scale(40),
+    height: scale(40),
     alignItems: "center",
     justifyContent: "center",
   },
 
   captureWrapper: {
-    borderWidth: 3,
+    borderWidth: scale(3),
     borderColor: "#FFD400",
-    borderRadius: 50,
-    padding: 5,
+    borderRadius: scale(50),
+    padding: scale(5),
   },
 
   captureBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: scale(70),
+    height: scale(70),
+    borderRadius: scale(35),
     backgroundColor: "#fff",
   },
 
   explore: {
-    position: "absolute",
-    bottom: 30,
     alignSelf: "center",
   },
 
   badgeText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: moderateScale(12),
     fontWeight: "bold",
   },
 
   exploreText: {
     color: "#FFD400",
+    fontSize: moderateScale(13),
   },
 });
