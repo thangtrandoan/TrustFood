@@ -7,21 +7,28 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
-import {Typography} from '../../theme/typography';
+import { Typography } from '../../theme/typography';
 import { useTheme } from '../../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 
+const { width, height } = Dimensions.get('window');
+const guidelineBaseWidth = 375;
+
+// scale function
+const scale = (size: number) => (width / guidelineBaseWidth) * size;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Splash'>;
 
 export default function SplashScreen() {
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  type NavigationProp = NativeStackNavigationProp<RootStackParamList,'Splash'>
+
   return (
     <View style={{ flex: 1 }}>
-      {/* Ảnh nền */}
       <ImageBackground
         source={require('../../assets/images/Background_1.jpg')}
         resizeMode="cover"
@@ -67,36 +74,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
-    padding: 24,
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(24),
   },
+
   content: {
-    marginTop: 120,
+    marginTop: height * 0.15, // responsive theo chiều cao
     alignItems: 'center',
   },
+
   logo: {
-    width: 70,
-    height: 70,
-    marginBottom: 24,
-    borderRadius:12
+    width: scale(70),
+    height: scale(70),
+    marginBottom: scale(20),
+    borderRadius: scale(12),
   },
+
   title: {
     ...Typography.H1,
-    fontSize: 24,
+    fontSize: scale(22),
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 30,
+    lineHeight: scale(28),
+    paddingHorizontal: scale(10),
   },
+
   button: {
-    height: 56,
-    borderRadius: 28,
+    height: scale(56),
+    borderRadius: scale(28),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: scale(30),
   },
+
   buttonText: {
-    fontSize: 16,
+    fontSize: scale(16),
     fontWeight: '500',
     color: '#101010',
-    lineHeight: 28,
+    lineHeight: scale(24),
   },
 });

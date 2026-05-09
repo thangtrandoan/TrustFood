@@ -4,20 +4,30 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
-import {AppText} from '../../components/AppText';
+import { AppText } from '../../components/AppText';
 import { useTheme } from '../../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 
+const { width, height } = Dimensions.get('window');
+const baseWidth = 375;
+
+const scale = (size: number) => (width / baseWidth) * size;
+
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'AuthIntro'
+>;
+
 export default function AuthIntroScreen() {
   const theme = useTheme();
   const navigation = useNavigation<NavigationProp>();
-    type NavigationProp = NativeStackNavigationProp<RootStackParamList,'AuthIntro'>
 
   return (
-    <View style={[styles.container, { backgroundColor: '#000' }]}>
+    <View style={styles.container}>
       <Image
         source={require('../../assets/images/Background_2.png')}
         style={styles.image}
@@ -34,23 +44,31 @@ export default function AuthIntroScreen() {
       </AppText>
 
       <TouchableOpacity
-        style={[styles.primaryBtn, { backgroundColor: theme.colors.primary }]}
+        style={[
+          styles.primaryBtn,
+          { backgroundColor: theme.colors.primary },
+        ]}
         onPress={() => navigation.navigate('Login')}
       >
         <AppText variant="P1_Medium">Đăng nhập</AppText>
       </TouchableOpacity>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.outlineBtn}
         onPress={() => navigation.navigate('Register')}
+      >
+        <AppText
+          variant="P1_Medium"
+          style={{ color: theme.colors.background }}
         >
-        <AppText variant="P1_Medium" style={{ color: theme.colors.background }}>
           Đăng ký
         </AppText>
       </TouchableOpacity>
-      <AppText variant="P4_Regular" style={styles.addText} >
-        - - - - - - - - - - - - - - - - - - -Đăng nhập nhanh với- - - - - - - - - - - - - - - - - - -
+
+      <AppText variant="P4_Regular" style={styles.addText}>
+        ───────── Đăng nhập nhanh với ─────────
       </AppText>
+
       <TouchableOpacity style={styles.outlineBtn}>
         <View style={styles.btnContent}>
           <Image
@@ -70,56 +88,71 @@ export default function AuthIntroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    backgroundColor: '#000',
+    paddingHorizontal: scale(20),
+    paddingVertical: scale(24),
     justifyContent: 'center',
   },
+
   image: {
     width: '100%',
-    height: 300,
-    marginBottom: 24,
+    height: height * 0.3, // responsive theo chiều cao
+    marginBottom: scale(20),
   },
+
   title: {
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: scale(12),
     color: '#fff',
+    paddingHorizontal: scale(10),
   },
+
   desc: {
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: scale(28),
     color: '#aaa',
+    paddingHorizontal: scale(16),
+    lineHeight: scale(20),
   },
+
   primaryBtn: {
-    height: 56,
-    borderRadius: 28,
+    height: scale(56),
+    borderRadius: scale(28),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: scale(14),
   },
+
   outlineBtn: {
-    height: 56,
-    borderRadius: 28,
+    height: scale(56),
+    borderRadius: scale(28),
     borderWidth: 1,
     borderColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: scale(12),
   },
+
   addText: {
     textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 20,
+    marginVertical: scale(18),
     color: '#c0c0c0',
+    fontSize: scale(12),
   },
+
   btnContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   icon: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
+    width: scale(20),
+    height: scale(20),
+    marginRight: scale(8),
   },
-   btnText: {
+
+  btnText: {
     color: '#fff',
   },
 });
